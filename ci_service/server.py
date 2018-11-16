@@ -17,11 +17,11 @@ def image_cooker():
     is_merged = request_data_json["pull_request"]['merged']
     if is_merged:
         sha_id = request_data_json["pull_request"]["head"]["sha"]
-        docker_info_url = "https://raw.githubusercontent.com/JonatanOrdonez/sd2018b-exam2/"+sha+"/dockerInfo.json"
+        docker_info_url = "https://raw.githubusercontent.com/JonatanOrdonez/sd2018b-exam2/"+sha_id+"/dockerInfo.json"
         request_docker_info_data = requests.get(docker_info_url)
         request_docker_info_json = json.loads(request_docker_info_data.content)
 
-        docker_file_pattern_url = "https://raw.githubusercontent.com/JonatanOrdonez/sd2018b-exam2/"+sha+"/Dockerfile"
+        docker_file_pattern_url = "https://raw.githubusercontent.com/JonatanOrdonez/sd2018b-exam2/"+sha_id+"/Dockerfile"
         docker_file_pattern_data = requests.get(docker_file_pattern_url)
         docker_file_pattern = docker_file_pattern_data.content
         docker_file_artifact = open("Dockerfile", "w")
