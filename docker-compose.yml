@@ -1,14 +1,28 @@
 version: "3"
 services:
-  ci_server:
-    build: ./ci_server
+  ci_service:
+    build: ./ci_service
     ports:
-      - "8084:80"
+      - "81:80"
+    volumes:
+      - //var/run/docker.sock:/var/run/docker.sock
   ngrok_service:
     image: wernight/ngrok
     ports:
-      - "8085:4040"
+      - "82:4040"
     links:
-      - ci_server
+      - ci_service
     environment:
-      NGROK_PORT: ci_server:80
+      NGROK_PORT: ci_service:80
+  registry_service:
+    restart: always
+    image: registry
+    ports:
+      - "83:5000"
+    volumes:
+      - ./registry_service:/certs
+      - ./data:/data
+    environment:
+      REGISTRY_HTTP_ADDR: 0.0.0.0:5000
+      REGISTRY_HTTP_TLS_CERTIFICATE: ./certs/domain.crt
+      REGISTRY_HTTP_TLS_KEY: ./certs/domain.key
