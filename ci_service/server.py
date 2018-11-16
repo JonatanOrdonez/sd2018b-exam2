@@ -2,6 +2,7 @@ from flask import Flask, Response, json, request
 import socket
 import os
 import requests
+import docker
 
 app = Flask(__name__)
 
@@ -32,7 +33,7 @@ def image_cooker():
         registry = docker.DockerClient(base_url='unix://var/run/docker.sock')
         registry.images.build(path="./", tag=registry_url)
         registry.images.push(registry_url)
-        registry.images.remove(image=registry_url, force=True)
+        # registry.images.remove(image=registry_url, force=True)
         return Response("Image built successfully :D", 200)
     else:
         return Response("Pull request is not currently merged :c", 200)
