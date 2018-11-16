@@ -21,7 +21,7 @@ services:
       - "83:5000"
     environment:
       REGISTRY_HTTP_ADDR: 0.0.0.0:5000
-      REGISTRY_HTTP_TLS_CERTIFICATE: ./certs/domain.crt
+      REGISTRY_HTTP_TLS_CERTIFICATE: ./certs/domain.cert
       REGISTRY_HTTP_TLS_KEY: ./certs/domain.key
     volumes:
       - ./registry_service:/certs
