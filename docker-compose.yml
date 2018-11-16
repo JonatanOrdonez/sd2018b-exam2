@@ -19,10 +19,10 @@ services:
     image: registry
     ports:
       - "83:5000"
-    volumes:
-      - ./registry_service:/certs
-      - ./data:/data
     environment:
       REGISTRY_HTTP_ADDR: 0.0.0.0:5000
       REGISTRY_HTTP_TLS_CERTIFICATE: ./certs/domain.crt
       REGISTRY_HTTP_TLS_KEY: ./certs/domain.key
+    volumes:
+      - ./registry_service:/certs
+      - ./data:/data
