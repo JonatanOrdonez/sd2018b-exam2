@@ -25,13 +25,14 @@ def image_cooker():
         docker_file_pattern_data = requests.get(docker_file_pattern_url)
         docker_file_pattern = docker_file_pattern_data.content
         docker_file_artifact = open("Dockerfile", "w")
-        docker_file_artifact.write(str(docker_file_pattern), 'utf-8')
+        docker_file_artifact.write(str(docker_file_pattern, 'utf-8'))
         docker_file_artifact.close()
 
         registry_url = "192.168.130.126:8083/"+request_docker_info_json['service_name']+":"+request_docker_info_json['version']
         registry = docker.DockerClient(base_url='unix://var/run/docker.sock')
         registry.images.build(path="./", tag=registry_url)
         registry.images.push(registry_url)
+        registry.images.remove(image=registry_url, force=True)
         return Response("Image built successfully :D", 200)
     else:
         return Response("Pull request is not currently merged :c", 200)
