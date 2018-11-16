@@ -19,9 +19,3 @@ services:
     image: registry:2
     ports:
       - "83:5000"
-  badge_service:
-    build: ./badge_service
-    ports:
-      - "84:80"
-  redis:
-    image: "redis:alpine"

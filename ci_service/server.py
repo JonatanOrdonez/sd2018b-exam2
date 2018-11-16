@@ -35,7 +35,6 @@ def image_cooker():
         registry = docker.DockerClient(base_url='unix://var/run/docker.sock') # create a client for communicating with a Docker server
         registry.images.build(path="./", tag=registry_tag) # build a image in the registry server
         registry.images.push(registry_tag) # push the image to the registry
-        resp = requests.get('localhost:84/badgets/services/'+service_name+'/versions/'+version) # save information to badge
         print("Image built successfully :D")
         return Response("Image built successfully :D", 200)
     else:
