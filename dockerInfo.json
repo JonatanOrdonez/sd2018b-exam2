@@ -1,5 +1,4 @@
 {
     "service_name": "python_alphine",
-    "version": "0.8.0",
-    "type": "Docker"
+    "version": "0.8.0"
 }
