@@ -29,7 +29,7 @@ def image_cooker():
         docker_file_artifact.write(str(docker_file_pattern, 'utf-8'))
         docker_file_artifact.close()
 
-        registry_url = "192.168.130.126:8083/"+request_docker_info_json['service_name']+":"+request_docker_info_json['version']
+        registry_url = "192.168.130.126:83/"+request_docker_info_json['service_name']+":"+request_docker_info_json['version']
         registry = docker.DockerClient(base_url='unix://var/run/docker.sock')
         registry.images.build(path="./", tag=registry_url)
         registry.images.push(registry_url)
