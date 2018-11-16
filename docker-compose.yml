@@ -1,0 +1,14 @@
+version: "3"
+services:
+  ci_server:
+    build: ./ci_server
+    ports:
+      - "8084:80"
+  ngrok_service:
+    image: wernight/ngrok
+    ports:
+      - "8085:4040"
+    links:
+      - ci_server
+    environment:
+      NGROK_PORT: ci_server:80
