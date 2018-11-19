@@ -154,7 +154,7 @@ In addition, we can also access the ``ci_service`` through ``https://c3d3b0d7.ng
 
 ![](images/ci_con_ngrok.png)
 
-#### Registry service
+### Registry service
 This service is created from the docker hub base image ``registry image:2``. In the configuration of the docker-compose it is specified to always restart, allowing the service to be executed every time there is a failure. Finally, a mapping of the 83 port of the host computer to the 5000 container port is done.
 
 ## How does it works
@@ -206,4 +206,9 @@ docker pull localhost:83/python_alphine:0.2.0
 
 In the following image it is observed that the image is downloaded correctly and is stored in our image database:
 
-![](images/lista_imagenes_Cargadas_actualmente.png)
+![](images/lista_imagenes_cargadas_actualmente.png)
+
+## Problems found
+1. The first problem encountered was that the registry blocked the access of the ``ci_service`` to upload the image to the server. When I asked my colleagues about the problem, they told me that I had to create certificates and saved them in the container, so the registry would not block the access. However, what I did was to look for an image in the docker hub that would not block access and use the ``registry:2``.
+
+1. Another problem I had was the creation of the container with ngrok, because I thought that I would have to create a container and explicitly leave the instructions that the container had to do to install and run negrok. This looks like the same procedure as the first partial. However, I found an image in the docker hub that creates a container with ngrok and provides a GUI through which the ip can be obtained. The image is ``wernight/ngrok``.
