@@ -1,5 +1,5 @@
 # sd2018b-exam2
-## Examen 2
+
 **Universidad ICESI**  
 **Course:** Sistemas Distribuidos  
 **Teacher:** Daniel Barragán C.  
@@ -69,7 +69,7 @@ In the following image it can be seen that when accessing ``0.0.0.0:82`` a GUI w
 In the ``docker-compose`` file we can see that the 81 port of the computer is mapped with 80 port of the container; this is done because internally a flask api is deployed and is exposed on 80 port. In addition, the ``docker.sock`` file is copied from the ``/var/run/`` folder to allow the container to communicate with docker through a socket and build an image.
 
 #### Ci service Dockerfile
-The image for this service is created from a Dockerfile in the ``/ci_service`` folder. This file contains the following:
+The image for this service is created from a Dockerfile in the ``/ci_service`` folder. This file contains the following information:
 ```
 # take the 'python:3.6-slim' base image for the container
 FROM python:3.6-slim
@@ -96,6 +96,56 @@ This file contains the necessary code to receive and read a payload from a githu
 
 After processing the pull request information, this is validated whether or not it has been merged to the branch. If it has been merged, a docker image is created from the Dockerfile base file in the ``develop-merge`` branch. Then an image is uploaded to the registry using the name of the service and version as found in the ``dockerInfo.json`` file contained in the branch that we want to mix.
 
+The content of the file can be seen below:
+```
+from flask import Flask, Response, json, request
+import socket
+import os
+import requests
+import docker
+
+app = Flask(__name__)
+
+@app.route("/")
+def index():
+    return "Ya funciona :D"
+
+@app.route("/makeimage", methods=['POST'])
+def image_cooker():
+    request_data = request.get_data() # request data from http request
+    request_data_string = str(request_data, 'utf-8') # parse the request data to string
+    request_data_json = json.loads(request_data_string) # parse string request data to json format
+    is_merged = request_data_json["pull_request"]['merged'] # get the boolean value from merged action for pull request
+    if is_merged:
+        sha_id = request_data_json["pull_request"]["head"]["sha"] # get the sha id of pull request
+        docker_info_url = "https://raw.githubusercontent.com/JonatanOrdonez/sd2018b-exam2/"+sha_id+"/dockerInfo.json" # url for get dockerInfo json file with service name, version and value
+        request_docker_info_data = requests.get(docker_info_url) # request for get dockerInfo.json data
+        request_docker_info_json = json.loads(request_docker_info_data.content) # parse docker info data to json
+
+        docker_file_pattern_url = "https://raw.githubusercontent.com/JonatanOrdonez/sd2018b-exam2/"+sha_id+"/Dockerfile" # url for get Dockerfile DSL
+        docker_file_pattern_data = requests.get(docker_file_pattern_url) # request for get Dockerfile data
+        docker_file_pattern = docker_file_pattern_data.content # get content of Dockerfile
+        docker_file_artifact = open("Dockerfile", "w") # instance of a new Dockerfile in the current folder
+        docker_file_artifact.write(str(docker_file_pattern, 'utf-8')) # write the content of the Dockerfile of request ine the new file
+        docker_file_artifact.close() # close de buffer writer action
+
+        service_name = request_docker_info_json['service_name']
+        version = request_docker_info_json['version']
+        registry_tag = "localhost:83/"+service_name+":"+version # create the tag for upload the container to the registry
+        registry = docker.DockerClient(base_url='unix://var/run/docker.sock') # create a client for communicating with a Docker server
+        registry.images.build(path="./", tag=registry_tag) # build a image in the registry server
+        registry.images.push(registry_tag) # push the image to the registry
+        print("Image built successfully :D")
+        return Response("Image built successfully :D", 200)
+    else:
+        print("Pull request is not currently merged :c")
+        return Response("Pull request is not currently merged :c", 200)
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=80)
+
+```
+
 In the following image we can see the ci_service working by accessing the ``0.0.0.0:81`` ip:
 
 ![](images/ci_funciona.png)
@@ -106,3 +156,54 @@ In addition, we can also access the ``ci_service`` through ``https://c3d3b0d7.ng
 
 #### Registry service
 This service is created from the docker hub base image ``registry image:2``. In the configuration of the docker-compose it is specified to always restart, allowing the service to be executed every time there is a failure. Finally, a mapping of the 83 port of the host computer to the 5000 container port is done.
+
+## How does it works
+The first thing that we do is to create a webhook through github and add the ip provided by the ngrok service. In the following image we can see the webhook with the ip:
+
+![](images/ip_en_webhook.png)
+
+The next thing we do is make changes to some file in the develop-merge branch so that we can enable the pull request option and generate a payload through the webhook. For practical purposes, we change the version of the ``dockerInfo.json`` file. The changes can be seen in the following image:
+
+![](images/cambios_develop_merge.png)
+
+In the following image we see how a pull request is done to the develop branch:
+
+![](images/pull_request_a_develop.png)
+
+This trigger causes a payload to be sent to the service exposed by the ``ci_service``. In the following image you can see the payload that has been sent to the service endpoint:
+
+![](images/webhook_payload_pull_request.png)
+
+On the right side you see how the http request is received by the ``ci_service``, however, since the pull request is not mixed, the ``ci_service`` logic is not performed.
+
+This can be seen in the following image. The ci_service returns a response when the pull request has not yet been merged:
+
+![](images/respuesta_pull_request_no_merged.png)
+
+Now merge the pull request to the ``develop`` branch.
+
+![](images/pull_request_mezclado.png)
+
+In the previous image it is observed that the payload has an error, but this is because the process of creating the docker image and uploading it to the registry takes more time than the minimum response time that the webhook has.
+
+On the right side we see that the registry is processing the image to upload it to the server.
+
+To verify that the image has been loaded, we execute the following command that shows the images stored in the tag that we told to the registry in the ``ci_service``.
+
+```
+docker images localhost:83/python_aphine:0.2.0
+```
+
+In the following image we observed that the image was successfully uploaded:
+
+![](images/imagen_en_registry.png)
+
+To store the image on our own computer, we execute the following command that is responsible for downloading a copy of the registry.
+
+```
+docker pull localhost:83/python_alphine:0.2.0
+```
+
+In the following image it is observed that the image is downloaded correctly and is stored in our image database:
+
+![](images/lista_imagenes_Cargadas_actualmente.png)
